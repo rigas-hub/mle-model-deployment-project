@@ -19,16 +19,15 @@ This project predicts the duration of NYC Yellow Taxi trips in minutes using Jan
 
 The data target is `trip_duration_minutes`, calculated from the pickup and dropoff timestamps. The reusable feature set is `trip_distance` and `total_amount`.
 
-## Learning Objectives
+## What This Project Demonstrates
 
-By the end of this repository, you should be able to:
+- An end-to-end regression workflow for real-world NYC taxi trip data.
+- Separation of exploration, data preparation, training, and serving concerns.
+- Local experiment tracking and model comparison with MLflow.
+- Promotion of the best-performing model to a registered production alias.
+- Deployment of predictions through a FastAPI endpoint.
 
-- Build an end-to-end regression workflow for real-world taxi trip data.
-- Separate exploration, preprocessing, training, and serving concerns into maintainable code.
-- Track experiments locally with MLflow and compare model runs.
-- Serve model predictions through a local API.
-
-## Learning Path
+## Project Workflow
 
 ```mermaid
 flowchart LR
