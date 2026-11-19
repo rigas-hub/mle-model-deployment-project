@@ -1,6 +1,22 @@
-# Model Deployment Project
+# NYC Taxi Trip Duration Model
 
-Use this repository as a **template** for your model deployment project. You will train a regression model that predicts the duration of NYC Yellow Taxi trips, track your experiments locally with MLflow, and serve predictions through a FastAPI app on your own machine. Create pull requests in your own copy even if you are working alone, and use them to track your progress.
+![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
+![uv](https://img.shields.io/badge/uv-DE5FE9?logo=uv&logoColor=white)
+![Jupyter](https://img.shields.io/badge/Jupyter-F37626?logo=jupyter&logoColor=white)
+![pandas](https://img.shields.io/badge/pandas-150458?logo=pandas&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikitlearn&logoColor=white)
+![MLflow](https://img.shields.io/badge/MLflow-0194E2?logo=mlflow&logoColor=white)
+
+This project predicts the duration of NYC Yellow Taxi trips in minutes using January 2025 TLC trip data. It combines:
+
+- data exploration and feature engineering in a Jupyter notebook,
+- a baseline `RandomForestRegressor`,
+- hyperparameter tuning with `RandomizedSearchCV`,
+- local experiment tracking and model registration with MLflow,
+- reusable Python modules for configuration, data preparation, training, and model registry access,
+- and a planned FastAPI deployment workflow.
+
+The data target is `trip_duration_minutes`, calculated from the pickup and dropoff timestamps. The reusable feature set is `trip_distance` and `total_amount`.
 
 ## Learning Objectives
 
@@ -25,7 +41,9 @@ flowchart LR
 
 | File / Folder | Description |
 |---|---|
-| [**Project Description**](project-description.md) | The assignment tasks, suggested workflow, repository layout, and stretch goals. |
+| [**Exploration Notebook**](notebooks/data_exploration_and_experimentation.ipynb) | EDA, cleaning decisions, baseline modelling, tuning, and MLflow experiments. |
+| [**Training Script**](src/training/train.py) | Reproducible baseline training entry point with MLflow logging and registry promotion. |
+| [**Reusable Source Modules**](src/) | Shared settings, feature preparation, and model registry helpers. |
 
 ### Additional Folders and Files
 
@@ -40,62 +58,17 @@ Use [uv](https://docs.astral.sh/uv/getting-started/installation/) 0.13.5 or newe
 and Python 3.13.17 or a newer 3.13 patch release, as defined in
 [`.python-version`](.python-version).
 
-> [!NOTE]
-> Throughout these steps, text in angle brackets like `<repo-name>` is a **placeholder**. Replace it, including the `< >` brackets, with your own value. For example, `cd <repo-name>` becomes `cd mle-model-deployment-project`.
-
-### 1. Create the Repository from the Template
-
-Click **Use this template** on GitHub.
-
-When creating the repository:
-
-- Set yourself as the **Owner**
-- Choose a repository name
-- Disable **Include all branches**
-- Click **Create repository**
-
-> [!IMPORTANT]
-> If you are working in pairs or groups, only **one person** should complete this step.
-
----
-
-### 2. Add Collaborators (Pairs/Groups Only)
-
-If working with teammates:
-
-1. Open the repository on GitHub
-2. Go to **Settings → Collaborators**
-3. Add your teammates as collaborators
-4. Share the repository link with your team
-
-Teammates should accept the invitation before continuing.
-
----
-
-### 3. Clone the Repository
-
-Copy the SSH URL from the **Code** button on GitHub, then run:
-
-```bash
-git clone <copied-ssh-url>
-```
-
-The copied SSH URL will look like `git@github.com:<your-username>/<repo-name>.git`.
-
----
-
-### 4. Move into the Project Folder and Install Dependencies
+### 1. Install Dependencies
 
 This installs all dependencies and creates a virtual environment in `.venv/`.
 
 ```bash
-cd <repo-name>
 uv sync
 ```
 
 ---
 
-### 5. Open the Repository in VS Code
+### 2. Open the Repository in VS Code
 
 > [!NOTE]
 > Make sure you open VS Code from the project root so it automatically detects the environment created by `uv sync`.
@@ -108,36 +81,141 @@ code .
 
 If you create a notebook to explore the data, select the Python environment created by `uv sync` as the kernel.
 
-## How to Use This Repo
+---
 
-1. Read the assignment brief in [project-description.md](project-description.md).
-2. Download and inspect the January 2025 Yellow Taxi dataset.
-3. Train a baseline `RandomForestRegressor` and track runs locally with MLflow.
-4. Refactor preprocessing and training logic into reusable Python modules.
-5. Build a local prediction API with FastAPI.
-6. Send a test request to the API and document the outcome in your README or PR.
+### 3. Configure the Local Environment
 
-### Working Locally
+Copy the committed environment template before running the notebook or training script:
 
-Once you have implemented the project code, a typical local workflow looks like this:
+```bash
+cp .env.example .env
+```
 
-1. Train the model and log runs to the local `mlruns/` directory with MLflow.
-2. Start the tracking UI:
+The `.env` file contains local configuration and must **not** be committed to Git. It is intentionally excluded by `.gitignore`; only `.env.example` is versioned.
 
-   ```bash
-   uv run mlflow ui --backend-store-uri ./mlruns --port 5000
-   ```
+The default template configures:
 
-3. Run the API locally:
+| Variable | Purpose | Default |
+|---|---|---|
+| `MLFLOW_TRACKING_URI` | MLflow tracking server address | `http://127.0.0.1:5000` |
+| `MLFLOW_EXPERIMENT_NAME` | Experiment used for training runs | `yellow-taxi-duration` |
+| `MLFLOW_MODEL_NAME` | Registered model name | `rfr-ride-duration` |
+| `MODEL_ALIAS` | Alias that identifies the promoted model | `production` |
+| `TRAIN_DATA_URI` | Local or remote Parquet training source | January 2025 TLC URL |
+| `MLFLOW_ARTIFACTS_DIR` | Local MLflow artifact directory | `mlartifacts` |
 
-   ```bash
-   uv run uvicorn app.main:app --reload --port 8000
-   ```
+## Development So Far
 
-4. Send a request to the API:
+### Data Exploration and Cleaning
 
-   ```bash
-   curl -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/json" -d @sample-request.json
-   ```
+The [exploration notebook](notebooks/data_exploration_and_experimentation.ipynb) downloads the January 2025 Yellow Taxi Parquet file if it is not already present, inspects 3.47 million source rows and their data types, and evaluates candidate features.
 
-The `app/` package and `sample-request.json` are files you create during the project. Make the sample request match your `/predict` input schema before running the commands above.
+The exploratory cleaning decisions include:
+
+- deriving trip duration from pickup and dropoff timestamps,
+- retaining trips lasting between 1 minute and 6 hours,
+- retaining positive, plausible trip distances up to a 60 mph, 6-hour upper bound,
+- investigating and filtering implausible fare amounts,
+- examining location routes and fare/distance relationships,
+- and selecting `trip_distance` and `total_amount` as the initial feature set.
+
+Visual and summary analyses compare trip duration against trip distance and total fare. Route information was explored but not included in the baseline feature set.
+
+**Lesson learned:** the initial analysis showed little or no correlation between ride distance and trip duration, which was unexpected for a trip-duration model. This was caused by extreme and implausible outliers in the raw data. After deriving the target and filtering invalid durations, distances, and fares, the relationship became usable for modelling. This highlighted that a surprising lack of correlation can be a data-quality signal rather than evidence that a feature is weak.
+
+### Baseline Modelling
+
+The baseline model is a `RandomForestRegressor` with 100 trees, a maximum depth of 15, at least 2 observations per leaf, and `random_state=42`. The notebook used a 30% test split and reported:
+
+- MAE: 3 minutes
+- MSE: 27
+- RMSE: 5 minutes
+- R²: 0.796
+
+RMSE is the main comparison metric and is logged as `rmse_minutes`.
+
+### Hyperparameter Tuning
+
+The notebook also uses `RandomizedSearchCV` to tune the Random Forest on a smaller 20,000-row subsample for practical runtime. A 3-fold cross-validation search samples forest depth, features, leaf/split sizes, bootstrap sample size, and tree count.
+
+The tuned run reported:
+
+- best cross-validation RMSE: 6.157 minutes,
+- test RMSE: 5.606 minutes,
+- selected parameters: 207 estimators, maximum depth 40, 50% of features, 60.82% max samples, minimum leaf size 2, and minimum split size 13.
+
+Tuning must be compared with the same held-out data and measurement setup before promotion. The MLflow registry promotion logic only assigns or replaces the `production` alias when the candidate has a strictly lower `rmse_minutes`.
+
+### MLflow Experiment Tracking
+
+MLflow is the local source of truth for experiment runs, parameters, metrics, serialized models, and registered model versions.
+
+Start the MLflow server from the repository root **before** running the notebook or training script:
+
+```bash
+uv run mlflow server \
+  --host 127.0.0.1 \
+  --port 5000 \
+  --backend-store-uri sqlite:///mlflow.db \
+  --default-artifact-root ./mlartifacts \
+  --allowed-hosts "localhost:5000,127.0.0.1:5000"
+```
+
+Keep the server running in a separate terminal. Open the UI at <http://127.0.0.1:5000>.
+
+This setup stores tracking metadata in `mlflow.db` and model artifacts in `mlartifacts/`. Both are local generated files and should not be committed.
+
+### Python Refactoring
+
+Repeated modelling and registry logic has been moved out of the notebook into reusable modules:
+
+- `src/common/config.py` loads `.env` values and centralized project settings.
+- `src/common/features.py` owns feature names, target creation, cleaning, ride IDs, and prediction-frame construction.
+- `src/common/model_registry.py` configures tracking, creates experiments, registers model aliases, compares RMSE, and resolves models.
+- `src/training/train.py` provides a configurable baseline training command.
+
+The training script downloads or reads the configured data source, applies the shared cleaning rules, creates a 70/30 train/test split, trains the baseline model, logs parameters and RMSE to MLflow, registers the model, and promotes it to the configured alias only if it improves on the current production score.
+
+## Run the Training Script
+
+Start the MLflow server first, ensure `.env` exists, and run:
+
+```bash
+uv run python -m src.training.train
+```
+
+Useful overrides are available on the command line:
+
+```bash
+uv run python -m src.training.train \
+  --experiment-name yellow-taxi-duration \
+  --registered-model-name rfr-ride-duration \
+  --model-alias production \
+  --test-size 0.3 \
+  --random-state 42
+```
+
+The script prints the MLflow run ID, test RMSE, and whether the new registered model version was promoted.
+
+## Repository Layout
+
+```text
+data/                                  downloaded local dataset
+notebooks/                             data exploration and experiments
+src/common/                            shared settings, features, registry helpers
+src/training/train.py                  baseline training entry point
+mlflow.db                              local MLflow metadata (generated)
+mlartifacts/                           local MLflow model artifacts (generated)
+.env.example                           versioned configuration template
+.env                                   local secrets/configuration (not versioned)
+```
+
+## Working with the Results
+
+1. Run the MLflow server.
+2. Open <http://127.0.0.1:5000> and compare runs.
+3. Run the training script to create a new baseline run and registered model version.
+4. Inspect the `production` alias to identify the currently selected model.
+5. Use the registered model URI `models:/rfr-ride-duration@production` or the resolved alias through `src/common/model_registry.py` for downstream inference.
+
+The FastAPI app, sample request, Docker packaging, and API tests are the remaining deployment steps. When implemented, the API should load the production alias and return predictions for `trip_distance` and `total_amount`.

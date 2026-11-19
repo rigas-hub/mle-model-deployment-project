@@ -130,6 +130,9 @@ celerybeat.pid
 .uv/
 mlruns/
 artifacts/
+/data/
+/mlartifacts/
+/mlflow.db
 env/
 venv/
 ENV/
