@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from serve import api
@@ -28,5 +29,20 @@ def test_predict_uses_training_features(monkeypatch):
 
 def test_predict_requires_both_model_features():
     response = TestClient(api.app).post("/predict", json={"trip_distance": 2.4})
+
+    assert response.status_code == 422
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"trip_distance": 0.09, "total_amount": 18.5},
+        {"trip_distance": 360.01, "total_amount": 18.5},
+        {"trip_distance": 2.4, "total_amount": -0.01},
+        {"trip_distance": 2.4, "total_amount": 1000.01},
+    ],
+)
+def test_predict_rejects_features_outside_training_ranges(payload):
+    response = TestClient(api.app).post("/predict", json=payload)
 
     assert response.status_code == 422

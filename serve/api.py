@@ -15,8 +15,18 @@ from src.common.model_registry import (
 
 
 class PredictionRequest(BaseModel):
-    trip_distance: float = Field(..., description="Trip distance in miles")
-    total_amount: float = Field(..., description="Total trip amount in dollars")
+    trip_distance: float = Field(
+        ...,
+        ge=0.1,
+        le=360,
+        description="Trip distance in miles (0.1 to 360)",
+    )
+    total_amount: float = Field(
+        ...,
+        ge=0,
+        le=1000,
+        description="Total trip amount in dollars (0 to 1000)",
+    )
 
 
 class PredictionResponse(BaseModel):

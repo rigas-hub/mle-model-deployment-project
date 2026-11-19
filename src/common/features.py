@@ -19,7 +19,7 @@ def load_dataframe(source_uri: str) -> pd.DataFrame:
 
 
 def prepare_dataframe(df: pd.DataFrame, *, include_target: bool) -> pd.DataFrame:
-    """Apply the shared feature engineering used by training and inference."""
+    """Create the target and clean data used for model training."""
     prepared = df.copy()
 
     if include_target:

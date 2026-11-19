@@ -103,7 +103,6 @@ The default template configures:
 | `MLFLOW_MODEL_NAME` | Registered model name | `rfr-ride-duration` |
 | `MODEL_ALIAS` | Alias that identifies the promoted model | `production` |
 | `TRAIN_DATA_URI` | Local or remote Parquet training source | January 2025 TLC URL |
-| `MLFLOW_ARTIFACTS_DIR` | Local MLflow artifact directory | `mlartifacts` |
 
 ## Development Overview
 
@@ -205,6 +204,8 @@ data/                                  downloaded local dataset
 notebooks/                             data exploration and experiments
 src/common/                            shared settings, features, registry helpers
 src/training/train.py                  baseline training entry point
+serve/api.py                           FastAPI prediction endpoint
+tests/test_api.py                      API request and validation tests
 mlflow.db                              local MLflow metadata (generated)
 mlartifacts/                           local MLflow model artifacts (generated)
 .env.example                           versioned configuration template
@@ -236,4 +237,4 @@ Open <http://127.0.0.1:8000/docs> for the interactive API documentation. The `PO
 }
 ```
 
-It returns the predicted duration in minutes and the resolved MLflow model URI. The API reads `MLFLOW_TRACKING_URI`, `MLFLOW_MODEL_NAME`, and `MODEL_ALIAS` from the project environment configuration.
+The API accepts trip distances from 0.1 to 360 miles and total amounts from $0 to $1,000, matching the ranges retained during training. Out-of-range inputs receive a `422` response. Valid requests return the predicted duration in minutes and the resolved MLflow model URI. The API reads `MLFLOW_TRACKING_URI`, `MLFLOW_MODEL_NAME`, and `MODEL_ALIAS` from the project environment configuration.
