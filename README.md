@@ -14,7 +14,7 @@ This project predicts the duration of NYC Yellow Taxi trips in minutes using Jan
 - hyperparameter tuning with `RandomizedSearchCV`,
 - local experiment tracking and model registration with MLflow,
 - reusable Python modules for configuration, data preparation, training, and model registry access,
-- and a planned FastAPI deployment workflow.
+- and a FastAPI API for serving predictions from the registered model.
 
 The data target is `trip_duration_minutes`, calculated from the pickup and dropoff timestamps. The reusable feature set is `trip_distance` and `total_amount`.
 
@@ -44,6 +44,7 @@ flowchart LR
 | [**Exploration Notebook**](notebooks/data_exploration_and_experimentation.ipynb) | EDA, cleaning decisions, baseline modelling, tuning, and MLflow experiments. |
 | [**Training Script**](src/training/train.py) | Reproducible baseline training entry point with MLflow logging and registry promotion. |
 | [**Reusable Source Modules**](src/) | Shared settings, feature preparation, and model registry helpers. |
+| [**FastAPI App**](serve/api.py) | Loads the configured MLflow model and serves trip-duration predictions. |
 
 ### Additional Folders and Files
 
@@ -104,7 +105,7 @@ The default template configures:
 | `TRAIN_DATA_URI` | Local or remote Parquet training source | January 2025 TLC URL |
 | `MLFLOW_ARTIFACTS_DIR` | Local MLflow artifact directory | `mlartifacts` |
 
-## Development So Far
+## Development Overview
 
 ### Data Exploration and Cleaning
 
@@ -218,4 +219,21 @@ mlartifacts/                           local MLflow model artifacts (generated)
 4. Inspect the `production` alias to identify the currently selected model.
 5. Use the registered model URI `models:/rfr-ride-duration@production` or the resolved alias through `src/common/model_registry.py` for downstream inference.
 
-The FastAPI app, sample request, Docker packaging, and API tests are the remaining deployment steps. When implemented, the API should load the production alias and return predictions for `trip_distance` and `total_amount`.
+## Serve Predictions
+
+Start the MLflow server and make sure the configured registered model alias exists. Then launch the API from the repository root:
+
+```bash
+uv run uvicorn serve.api:app --host 127.0.0.1 --port 8000
+```
+
+Open <http://127.0.0.1:8000/docs> for the interactive API documentation. The `POST /predict` endpoint accepts the same two features used for training:
+
+```json
+{
+  "trip_distance": 2.4,
+  "total_amount": 18.5
+}
+```
+
+It returns the predicted duration in minutes and the resolved MLflow model URI. The API reads `MLFLOW_TRACKING_URI`, `MLFLOW_MODEL_NAME`, and `MODEL_ALIAS` from the project environment configuration.
