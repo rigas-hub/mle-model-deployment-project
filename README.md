@@ -6,6 +6,7 @@
 ![pandas](https://img.shields.io/badge/pandas-150458?logo=pandas&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikitlearn&logoColor=white)
 ![MLflow](https://img.shields.io/badge/MLflow-0194E2?logo=mlflow&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 
 This project predicts the duration of NYC Yellow Taxi trips in minutes using January 2025 TLC trip data. It combines:
 
@@ -110,6 +111,32 @@ The default template configures:
 
 The [exploration notebook](notebooks/data_exploration_and_experimentation.ipynb) downloads the January 2025 Yellow Taxi Parquet file if it is not already present, inspects 3.47 million source rows and their data types, and evaluates candidate features.
 
+The raw dataset contains 3,475,226 trips and 20 columns. This is one example record; the target `trip_duration_minutes` is calculated from the pickup and dropoff timestamps and is not a source column. IDs and flags are coded categories, not measurements.
+
+| Column | Example value | What it represents |
+|---|---:|---|
+| `VendorID` | `1` | Code for the data provider. |
+| `tpep_pickup_datetime` | `2025-01-01 00:18:38` | Local time when the trip began. |
+| `tpep_dropoff_datetime` | `2025-01-01 00:26:59` | Local time when the trip ended. |
+| `passenger_count` | `1` | Recorded number of passengers. |
+| `trip_distance` | `1.60` | Recorded trip distance in miles. |
+| `RatecodeID` | `1` | Code for the fare rate applied to the trip. |
+| `store_and_fwd_flag` | `N` | Whether the trip record was stored in the vehicle before being sent. |
+| `PULocationID` | `229` | Taxi Zone code where the trip began. |
+| `DOLocationID` | `237` | Taxi Zone code where the trip ended. |
+| `payment_type` | `1` | Code for the payment method. |
+| `fare_amount` | `$10.00` | Metered fare for the trip. |
+| `extra` | `$3.50` | Additional fare charges. |
+| `mta_tax` | `$0.50` | MTA tax recorded for the trip. |
+| `tip_amount` | `$3.00` | Recorded tip amount. |
+| `tolls_amount` | `$0.00` | Recorded toll charges. |
+| `improvement_surcharge` | `$1.00` | Improvement surcharge. |
+| `total_amount` | `$18.00` | Total charge recorded for the trip. |
+| `congestion_surcharge` | `$2.50` | Congestion surcharge. |
+| `Airport_fee` | `$0.00` | Airport-related fee, if applicable. |
+| `cbd_congestion_fee` | `$0.00` | Central Business District congestion fee, if applicable. |
+| `trip_duration_minutes` | `8.35` | Derived target: elapsed time between pickup and dropoff, in minutes. |
+
 The exploratory cleaning decisions include:
 
 - deriving trip duration from pickup and dropoff timestamps,
@@ -121,7 +148,8 @@ The exploratory cleaning decisions include:
 
 Visual and summary analyses compare trip duration against trip distance and total fare. Route information was explored but not included in the baseline feature set.
 
-**Lesson learned:** the initial analysis showed little or no correlation between ride distance and trip duration, which was unexpected for a trip-duration model. This was caused by extreme and implausible outliers in the raw data. After deriving the target and filtering invalid durations, distances, and fares, the relationship became usable for modelling. This highlighted that a surprising lack of correlation can be a data-quality signal rather than evidence that a feature is weak.
+> [!IMPORTANT]
+> **Lesson learned:** The initial analysis showed little or no correlation between ride distance and trip duration, which was unexpected for a trip-duration model. This was caused by extreme and implausible outliers in the raw data. After deriving the target and filtering invalid durations, distances, and fares, the relationship became usable for modelling. A surprising lack of correlation can be a data-quality signal rather than evidence that a feature is weak.
 
 ### Baseline Modelling
 
