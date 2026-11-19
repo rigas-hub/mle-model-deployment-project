@@ -32,7 +32,7 @@ def resolve_project_path(
 class ProjectSettings:
     """Centralized settings used by the scripts and notebooks."""
 
-    mlflow_tracking_uri: str = os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5001")
+    mlflow_tracking_uri: str = os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")
     experiment_name: str = os.getenv("MLFLOW_EXPERIMENT_NAME", "yellow-taxi-duration")
     registered_model_name: str = os.getenv("MLFLOW_MODEL_NAME", "rfr-ride-duration")
     model_alias: str | None = os.getenv("MODEL_ALIAS", "production")
